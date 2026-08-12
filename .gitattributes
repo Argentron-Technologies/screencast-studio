@@ -1,0 +1,25 @@
+# Line endings matter here, because this repo is authored on Windows and run
+# everywhere.
+#
+# With core.autocrlf=true (the Windows default) git would store CRLF in the
+# index, and a shell script checked out on Linux or macOS then fails at the
+# shebang with "bad interpreter: /usr/bin/sh^M". Force LF for everything that a
+# non-Windows shell or Node has to execute.
+
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.mjs   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+
+# PowerShell is happy with either, but CRLF is its native convention.
+*.ps1   text eol=crlf
+
+# never touch these
+*.png   binary
+*.jpg   binary
+*.mp4   binary
+*.wav   binary
+*.mp3   binary
