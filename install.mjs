@@ -142,16 +142,60 @@ if (fs.existsSync(skillScript)) {
   }
 }
 
+// ── hand over to the wizard ──────────────────────────────────────────────────
+// install.mjs installs the TOOL; setup.mjs configures a PROJECT. Running the
+// wizard straight away would scaffold into whatever directory the installer
+// happened to start in — often the home directory — so ask where first.
+//
+// Under `curl … | sh` stdin is already spent, but the terminal itself is still
+// reachable; setup.mjs reopens it (/dev/tty, CONIN$). Only skip if there really
+// is no terminal, e.g. CI.
+const setupScript = path.join(SCRIPTS, "setup.mjs");
+let launched = false;
+if (fs.existsSync(setupScript) && !process.env.SCS_NO_WIZARD) {
+  const term = (() => {
+    if (process.stdin.isTTY) return process.stdin;
+    try {
+      const fd = fs.openSync(WIN ? "CONIN$" : "/dev/tty", "r");
+      const s = fs.createReadStream(null, { fd, autoClose: false });
+      s.isTTY = true;
+      return s;
+    } catch { return null; }
+  })();
+
+  if (term) {
+    const { createInterface } = await import("node:readline");
+    const rl = createInterface({ input: term, output: process.stdout });
+    const ask = (q, d = "") => new Promise((r) => rl.question(`  ${q} ${c(2, `[${d}]`)} `, (a) => r((a || "").trim() || d)));
+    console.log(`\n${c(36, "set up a project?")}`);
+    console.log(c(2, "  Configures keys, prerequisites and scaffolding for one video project."));
+    const a = (await ask("continue? [Y/n]", "y")).toLowerCase();
+    if (a.startsWith("y")) {
+      const dir = path.resolve(await ask("project directory:", path.join(process.cwd(), "my-videos")));
+      rl.close();
+      const { spawn } = await import("node:child_process");
+      fs.mkdirSync(dir, { recursive: true });
+      launched = await new Promise((res) => {
+        const p = spawn(process.execPath, [setupScript, "--dir", dir], { stdio: "inherit", cwd: dir });
+        p.on("close", (code) => res(code === 0));
+        p.on("error", () => res(false));
+      });
+    } else rl.close();
+  }
+}
+
 // ── next ─────────────────────────────────────────────────────────────────────
-console.log(`\n${c(36, "next")}`);
-console.log(`
+if (!launched) {
+  console.log(`\n${c(36, "next")}`);
+  console.log(`
   1. start a project — the wizard does keys and prerequisites in one pass
        mkdir my-videos && cd my-videos
-       node ${q0(path.join(SCRIPTS, "setup.mjs"))}
+       node ${q0(setupScript)}
 
   2. read the workflow
        ${path.join(DEST, "skills", "narrated-walkthrough", "SKILL.md")}
 `);
+}
 say(`suggested capture.mode for this machine: ${c(36, `"${capture === "dda" ? "dda" : "cdp"}"`)}`);
 if (capture === "avf" || capture === "x11") {
   warn("a desktop-capture backend exists here but only the Windows path is verified;");

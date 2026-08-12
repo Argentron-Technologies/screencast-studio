@@ -65,12 +65,16 @@ admin/sudo, installs nothing but this repo, touches nothing outside your home
 directory, reports which capture backend and hardware encoder your machine has,
 and re-running it updates in place. Set `SCS_DIR` to change the location.
 
-The installer also registers the workflow with any coding agent it finds — see
-[Agent integration](#agent-integration).
+**The installer takes you all the way through.** After installing it registers
+the workflow with any coding agent it finds (see
+[Agent integration](#agent-integration)), then asks where you want your first
+project and runs the setup wizard there. One command from nothing to ready.
 
-## Quickstart
+Set `SCS_NO_WIZARD=1` to install the tool only.
 
-One interactive pass sets up everything: prerequisites, API keys, project files.
+## The setup wizard
+
+Run directly whenever you start another project:
 
 ```bash
 mkdir my-videos && cd my-videos
