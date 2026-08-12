@@ -1,0 +1,28 @@
+# Nothing secret should ever live in this repo — the plugin is generic and all
+# credentials belong in a consuming project's .env. This file is belt and
+# braces, in case anyone develops against a real app inside this directory.
+
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# browser sessions — these hold live auth cookies and tokens
+.auth/
+**/user-data-dir/
+
+# generated
+node_modules/
+out/
+public/vo/
+assets/*.png
+*.mp4
+*.webm
+*.wav
+*.mp3
+
+# local
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+{
+  "name": "screencast-studio",
+  "version": "1.0.0",
+  "description": "Produce narrated product-walkthrough videos of web apps: scripted browser automation captured to video, timed against generated speech, stitched with music and an end card.",
+  "keywords": ["video", "screencast", "walkthrough", "demo", "tutorial", "playwright", "tts", "ffmpeg"],
+  "skills": ["./skills/narrated-walkthrough"]
+}

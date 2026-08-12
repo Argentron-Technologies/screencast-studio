@@ -1,0 +1,19 @@
+{
+  "name": "screencast-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Narrated product-walkthrough videos of web apps: scripted browser automation captured to video, timed against generated speech, stitched with music and an end card.",
+  "bin": {
+    "walkthrough-init": "scripts/init.mjs"
+  },
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": { "optional": false }
+  }
+}
