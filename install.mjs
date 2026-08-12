@@ -30,6 +30,7 @@ const DEST = process.env.SCS_DIR
       : WIN ? path.join(process.env.LOCALAPPDATA || os.homedir(), "screencast-studio")
             : path.join(os.homedir(), ".screencast-studio"));
 const SCRIPTS = path.join(DEST, "scripts");
+const q0 = (p) => (/\s/.test(p) ? `"${p}"` : p);
 
 const tty = process.stdout.isTTY;
 const c = (n, s) => (tty ? `\x1b[${n}m${s}\x1b[0m` : s);
@@ -125,22 +126,30 @@ if (WIN) {
   console.log(`    export PATH="$SCREENCAST_STUDIO/scripts:$PATH"\n`);
 }
 
+// ── register with coding agents ───────────────────────────────────────────────
+// Only writes to agent config directories that already exist, and guidance
+// blocks go between markers so they can be removed cleanly.
+console.log("");
+const skillScript = path.join(SCRIPTS, "install-skill.mjs");
+if (fs.existsSync(skillScript)) {
+  const detected = run(process.execPath, [skillScript, "--list"]).stdout || "";
+  const found = (detected.match(/✓/g) || []).length;
+  if (found) {
+    run(process.execPath, [skillScript], { stdio: "inherit" });
+  } else {
+    say("no coding agents detected — register later with:");
+    console.log(`      node ${q0(skillScript)}`);
+  }
+}
+
 // ── next ─────────────────────────────────────────────────────────────────────
-const q = (p) => (/\s/.test(p) ? `"${p}"` : p);
 console.log(`\n${c(36, "next")}`);
 console.log(`
-  1. start a project
+  1. start a project — the wizard does keys and prerequisites in one pass
        mkdir my-videos && cd my-videos
-       npm init -y && npm i -D playwright && npx playwright install chromium
-       node ${q(path.join(SCRIPTS, "init.mjs"))} --module tour
+       node ${q0(path.join(SCRIPTS, "setup.mjs"))}
 
-  2. add your keys
-       ${WIN ? "copy" : "cp"} .env.example .env      ${WIN ? "" : "# "}then edit — never commit it
-
-  3. check this machine can capture smoothly
-       node ${q(path.join(SCRIPTS, "doctor.mjs"))}
-
-  4. read the workflow
+  2. read the workflow
        ${path.join(DEST, "skills", "narrated-walkthrough", "SKILL.md")}
 `);
 say(`suggested capture.mode for this machine: ${c(36, `"${capture === "dda" ? "dda" : "cdp"}"`)}`);

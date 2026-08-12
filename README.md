@@ -65,22 +65,30 @@ admin/sudo, installs nothing but this repo, touches nothing outside your home
 directory, reports which capture backend and hardware encoder your machine has,
 and re-running it updates in place. Set `SCS_DIR` to change the location.
 
+The installer also registers the workflow with any coding agent it finds — see
+[Agent integration](#agent-integration).
+
 ## Quickstart
+
+One interactive pass sets up everything: prerequisites, API keys, project files.
 
 ```bash
 mkdir my-videos && cd my-videos
-npm init -y && npm i -D playwright && npx playwright install chromium
-
-node "$SCREENCAST_STUDIO/scripts/init.mjs" --module tour
-cp .env.example .env            # fill in — never commit this
+node "$SCREENCAST_STUDIO/scripts/setup.mjs"
 ```
 
-Check the machine can actually capture smoothly before spending time on a take:
+It will:
 
-```bash
-node "$SCREENCAST_STUDIO/scripts/doctor.mjs"
-node "$SCREENCAST_STUDIO/scripts/doctor.mjs" --url https://your.app
-```
+- check Node, ffmpeg and Playwright, and offer to install the missing ones
+- prompt for your API keys, **masked**, and **verify each against the live
+  service before writing it** — a mistyped key otherwise fails ten minutes into
+  generating a voice-over
+- write `.env` (mode `600` on Unix) and make sure it's gitignored
+- scaffold `walkthrough.config.mjs` and a starter narration script
+- run `doctor.mjs` to confirm the machine can capture smoothly
+
+Re-running is safe: existing values are offered as defaults, and any key the
+wizard doesn't manage is preserved.
 
 Then point `walkthrough.config.mjs` at your app, sign in once, and run the loop:
 
@@ -104,11 +112,31 @@ node $S/stitch.mjs
 MODULE=tour node $S/verify-sync.mjs                          # prove sync, get chapters
 ```
 
-### As a Claude Code skill
+## Agent integration
 
-Clone it somewhere Claude Code can see and ask for a walkthrough video — the
-`narrated-walkthrough` skill carries the whole workflow, including the rules
-below, so the agent won't rediscover them the hard way.
+```bash
+node "$SCREENCAST_STUDIO/scripts/install-skill.mjs"           # install
+node "$SCREENCAST_STUDIO/scripts/install-skill.mjs" --list    # detect only
+node "$SCREENCAST_STUDIO/scripts/install-skill.mjs" --remove  # undo
+```
+
+Ask any of them for a product demo or tutorial video and they'll use this
+pipeline instead of improvising, and they'll already know the failure modes
+below rather than rediscovering them.
+
+| Agent | How it's installed | |
+|---|---|---|
+| **Claude Code** | `~/.claude/skills/narrated-walkthrough/` | true skill — auto-loads when the task matches |
+| **Codex** | `~/.codex/AGENTS.md` | guidance block |
+| **OpenCode** | `~/.config/opencode/AGENTS.md` | guidance block |
+| **Crush** | `~/.config/crush/CRUSH.md` | guidance block |
+
+Being straight about the difference: only Claude Code has a first-class skills
+format that loads on demand. The others take persistent instructions through an
+agent-guidance file, so they get a compact pointer to the workflow rather than
+the whole thing. Nothing is written for an agent whose config directory doesn't
+already exist, and guidance blocks sit between markers so they update or remove
+cleanly without disturbing the rest of your file.
 
 ---
 
@@ -177,7 +205,9 @@ Full detail in [`skills/narrated-walkthrough/SKILL.md`](skills/narrated-walkthro
 ```
 skills/narrated-walkthrough/SKILL.md   the workflow and the non-obvious rules
 scripts/
-  init.mjs              scaffold a project
+  setup.mjs             interactive wizard: prerequisites, keys, scaffold
+  install-skill.mjs     register with Claude Code / Codex / OpenCode / Crush
+  init.mjs              scaffold a project (setup.mjs calls this)
   doctor.mjs            can this machine capture smoothly?
   record.mjs            drive the app, capture the screen
   generate-vo.mjs       text-to-speech + cue alignment
